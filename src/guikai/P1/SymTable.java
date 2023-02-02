@@ -110,5 +110,7 @@ public class SymTable {
         System.out.print("\n");
     }
 
-
+    public LinkedList<HashMap<String,Sym>> getList(){
+        return list;
+    }
 }
