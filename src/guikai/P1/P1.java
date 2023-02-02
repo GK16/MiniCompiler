@@ -141,6 +141,9 @@ public class P1 {
         }
     }
 
+    /**
+     * test methods in SymTable class
+     */
     public static void testSymTable(){
         // test constructor of SymTable
         try {
