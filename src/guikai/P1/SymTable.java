@@ -16,7 +16,7 @@ public class SymTable {
 
     // add the given name and sym to the first HashMap in the list.
     void addDecl(String name, Sym sym) throws DuplicateSymException, EmptySymTableException {
-        // If this SymTable's list is empty, throw an EmptySymTableException.
+        // If this SymTable's list is null or empty, throw an EmptySymTableException.
         if (list == null || list.isEmpty()){
             EmptySymTableException e = new EmptySymTableException();
             throw e;
