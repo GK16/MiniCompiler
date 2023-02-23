@@ -1,6 +1,3 @@
-package guikai.P2;
-
-import java.util.*;
 import java.io.*;
 import java_cup.runtime.*;  // defines Symbol
 
@@ -12,12 +9,44 @@ import java_cup.runtime.*;  // defines Symbol
  */
 public class P2 {
     public static void main(String[] args) throws IOException {
-                                           // exception may be thrown by yylex
+        // exception may be thrown by yylex
         // test all tokens
-        testAllTokens();
+        testAllTokens("allTokens.in", "allTokens.out");
         CharNum.num = 1;
     
         // ADD CALLS TO OTHER TEST METHODS HERE
+
+        // test reserved words
+        testAllTokens("testFile/reservedWords.in", "testFile/reservedWords.out");
+        CharNum.num = 1;
+
+        // test identifiers
+        testAllTokens("testFile/identifiers.in", "testFile/identifiers.out");
+        CharNum.num = 1;
+
+        // test integer literals
+        testAllTokens("testFile/integerLiterals.in", "testFile/integerLiterals.out");
+        CharNum.num = 1;
+
+        // test string literals
+        testAllTokens("testFile/stringLiterals.in", "testFile/stringLiterals.out");
+        CharNum.num = 1;
+
+        // test symbols
+        testAllTokens("testFile/symbols.in", "testFile/symbols.out");
+        CharNum.num = 1;
+
+        // test comments
+        testAllTokens("testFile/comments.in", "testFile/comments.out");
+        CharNum.num = 1;
+
+        // test invalid tokens
+        testAllTokens("testFile/invalidTokens.in", "testFile/invalidTokens.out");
+        CharNum.num = 1;
+
+        // test string literal with end-of-file before the closing quote
+        testAllTokens("eof.txt", "eof.out");
+        CharNum.num = 1;
     }
 
     /**
@@ -29,13 +58,13 @@ public class P2 {
      * correctness of the scanner by comparing the input and output files
      * (e.g., using a 'diff' command).
      */
-    private static void testAllTokens() throws IOException {
+    private static void testAllTokens(String inFilePath, String ourFilePath) throws IOException {
         // open input and output files
         FileReader inFile = null;
         PrintWriter outFile = null;
         try {
-            inFile = new FileReader("allTokens.in");
-            outFile = new PrintWriter(new FileWriter("allTokens.out"));
+            inFile = new FileReader(inFilePath);
+            outFile = new PrintWriter(new FileWriter(ourFilePath));
         } catch (FileNotFoundException ex) {
             System.err.println("File allTokens.in not found.");
             System.exit(-1);

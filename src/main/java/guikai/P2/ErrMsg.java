@@ -1,5 +1,3 @@
-package guikai.P2;
-
 /**
  * ErrMsg
  *

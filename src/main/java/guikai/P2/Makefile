@@ -36,8 +36,16 @@ ErrMsg.class: ErrMsg.java
 # to expected results
 ###
 test:
-	java -cp $(CP) P2 
+	java -cp $(CP) P2
 	diff allTokens.in allTokens.out
+	diff ./testFile/reservedWords.in ./testFile/reservedWords.out
+	diff ./testFile/identifiers.in ./testFile/identifiers.out
+	diff ./testFile/integerLiterals.in ./testFile/integerLiterals.out
+	diff ./testFile/stringLiterals.in ./testFile/stringLiterals.out
+	diff ./testFile/symbols.in ./testFile/symbols.out
+	diff ./testFile/comments.goal ./testFile/comments.out
+	diff ./testFile/invalidTokens.goal ./testFile/invalidTokens.out
+	diff eof.goal eof.out
 
 ###
 # clean up
@@ -48,3 +56,5 @@ clean:
 
 cleantest:
 	rm -f allTokens.out
+	rm -f testFile/*.out
+

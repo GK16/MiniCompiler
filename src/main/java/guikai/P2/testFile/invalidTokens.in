@@ -1,0 +1,12 @@
+99999999999999
+1.1
+~
+&var
+00aa
+"unterminated
+"also unterminated \"
+"backslash followed by space: \ is not allowed"
+"bad escaped character: \a AND not terminated
+$
+#
+@
