@@ -1,0 +1,63 @@
+bool x;
+int y;
+struct a b;
+struct s_id {
+    int a;
+    bool b;
+};
+
+int testAssignExp(bool test, int p2) {
+    bool a;
+    y = z;
+
+    x = 1 + 2 + 3;
+    z = 3 + x;
+    s = "str" + "ing";
+
+    x = 1 - 2 - 3;
+    z = 3 - x;
+
+    x = 1 * 2 * 3;
+    z = 3 * x;
+
+    x = 1 / 2 / 3;
+    z = 3 / x;
+
+    a = b.y && c;
+    a = b || c;
+    a = b.y > c;
+    a = b >= c;
+    a = b.y < c;
+    a = b <= c;
+    a = b.y == c;
+    a = b != c;
+    a = !b.y;
+    a = -b.y;
+    return;
+}
+
+bool testStmts(int p1, bool p2, int p3) {
+    int a;
+    if(a > 0 && p1 != p2){
+        a++;
+        a--;
+    }
+
+    if(a > 0 || !p3){
+        cin >> a.x;
+    } else {
+        cout << a;
+    }
+
+    while(a>0){
+        a--;
+    }
+
+    repeat (a * p1 +2){
+        cout << a.y;
+    }
+    a = testAssignExp(true, 6);
+    testAssignExp(false, a);
+    return a + p1 * p2;
+}
+
