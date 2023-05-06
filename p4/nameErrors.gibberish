@@ -1,0 +1,99 @@
+struct St1 {
+    int a;
+    bool _b;
+};
+
+struct St2 {
+    struct St1 s1;
+    bool _a;
+};
+
+// Multiply declared identifier
+int x;
+bool y;
+struct St1 x;
+struct St2 s2;
+bool x;
+
+// Multiply declared identifier
+int testFunc(int a, bool b) {
+    bool a;
+    int b;
+    int x;
+    bool y;
+    int z;
+    struct St1 s1;
+    struct St2 s2;
+
+    // Invalid name of struct type
+    struct St3 st3;
+    struct St4 st4;
+
+    // invalid struct name
+    struct a stx;
+    struct b stx2;
+
+    // Non-function declared void
+    void d;
+    void e;
+
+    // Undeclared identifier
+    undecl = xx + yyy;
+    ccc = dddd;
+
+    // Dot-access of non-struct type
+    a = b._a;
+    x = z.a;
+    b = a.x;
+
+    // bad struct access RHS
+    a = s1.yy;
+    x = s2.x;
+
+    // Invalid struct field name
+    a = s1.c;
+    x = s2.xx;
+
+    return a;
+}
+
+bool testStmts(int p1, bool p2, int p3, bool a) {
+    struct St1 s1;
+
+    // Test if
+    if(a > 0 && p1 != p2){
+        a++;
+        a--;
+    }
+
+    // Test if-else
+    if(a > 0 || !p3){
+        cin >> s1.a;
+    } else {
+        cout << a;
+    }
+
+    // if in if
+    if(p2) {
+        if (a == p1) { 
+            int a; a = p3; 
+        } else { 
+            a++; 
+        }
+    }
+
+    // Test while
+    while(a>0){
+        a--;
+    }
+
+    // Test repeat
+    repeat (a * p1 +2){
+        cout << s1.a;
+    }
+    a = testFunc(true, 6);
+    testFunc(false, a);
+
+    // Test non-empty return
+    return a + p1 * p2;
+}

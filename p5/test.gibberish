@@ -1,0 +1,94 @@
+int a;
+bool b;
+struct structA {
+    int c;
+    bool d;
+};
+struct structB {
+    int e;
+    bool f;
+    struct structA g;
+};
+
+struct structA stA;
+struct structB stB;
+
+int func1 (int h, bool i){
+    int j;
+    bool k;
+
+    cin >> j;
+    cout << k;
+
+    stA.c++;
+    stB.e--;
+    stA.c = -j;
+    stB.e = h + a;
+    stA.c = h - a;
+    stB.e = h * a;
+    stA.c = h / a;
+    stB.e = -(h + a * h / a - h);
+
+    return stA.c + stB.e;
+}
+
+bool func2 (int l, bool m){
+    int o;
+    bool p;
+    struct structA q;
+
+    p = m;
+    p = q.d;
+    p = !q.d;
+    p = m && q.d;
+    p = m || q.d;
+    p = l == o;
+    p = l != o;
+    p = l >= o;
+    p = l <= o;
+    p = !(l == o) && (m || q.d);
+    p = (l != o) || !m && q.d || l <= o;
+
+    return q.d && p && m;
+}
+
+void func3 (int r, bool s){
+    int t;
+    bool u;
+    struct structB v;
+
+    if(r+t > a && (u || s) || b){
+        t = func1(r, s);
+    }
+
+    if(!s || t!= a && -t <= stA.c){
+        u = func2(r, s) || s;
+        return;
+    } else {
+        t = func1(a, b) * r;
+        return;
+    }
+
+    while(r+t > a && (u || s) || b){
+        t = a + func1(r, s);
+        if(!s || t!= a){
+            return;
+        }
+    }
+
+    repeat(func1(a, b)){
+        a = t + func1(a, b);
+    }
+
+    return;
+}
+
+void func4 (){
+    int x;
+    bool y;
+    x = func1(a, b);
+    y = func2(a, b);
+    func3(a, b);
+
+    stA.c = func1(func1(stA.c, stA.d), func2(stA.c, stA.d));
+}

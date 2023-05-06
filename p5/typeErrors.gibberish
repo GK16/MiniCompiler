@@ -1,0 +1,168 @@
+bool bbb;
+struct S { int a; bool b; };
+struct S t;
+
+void f(int p1, bool p2) {
+}
+
+// Missing return value
+int f2(int p1, bool p2) {
+    return;
+}
+
+// Return with a value in a void function
+void f3(int p1){
+    return p1;
+}
+
+// Bad return value
+int f4(int p1, bool p2) {
+    return p2;
+}
+
+struct S2 {
+    int c; 
+    bool d;
+};
+struct S2 t2;
+
+void main() {
+    int aaa;
+
+    // Attempt to write a function
+    cout << f;
+    cout << f2;
+
+    // Attempt to write a struct name
+    cout << S;
+    cout << S2;
+
+    // Attempt to write a struct variable
+    cout << t;
+    cout << t2;
+    
+    // Attempt to write void
+    cout << f(aaa, bbb);
+    cout << f3(aaa);
+
+    // Attempt to read a function
+    cin >> f;
+    cin >> f2;
+
+    // Attempt to read a struct name
+    cin >> S;
+    cin >> S2;
+
+    // Attempt to read a struct variable
+    cin >> t;
+    cin >> t2;
+    
+    // Attempt to call a non-function
+    aaa();
+    bbb();
+    S();
+    t();
+
+    // Function call with wrong number of args
+    f(aaa, bbb, aaa);
+    f(aaa);
+    f();
+
+    // Type of actual does not match type of formal
+    f(aaa, aaa);
+    f(bbb, bbb);
+    f(aaa, t);
+
+    // Arithmetic operator applied to non-numeric operand
+    aaa = t.a + bbb;
+    aaa = t.a - bbb;
+    aaa = t.a * bbb;
+    aaa = t.a / bbb;
+    
+    // Relational operator applied to non-numeric operand
+    bbb = aaa > bbb;
+    bbb = aaa < bbb;
+    bbb = aaa >= bbb;
+    bbb = aaa <= bbb;
+
+    // Logical operator applied to non-bool operand
+    bbb = t.b && aaa;
+    bbb = t.b || aaa;
+    bbb = !aaa;
+
+
+    // Non-bool expression used as an if condition
+    if(aaa){
+        aaa++;
+    }
+
+    if(t){
+        aaa++;
+    } else {
+        aaa--;
+    }
+
+    if(f){
+        aaa++;
+    }
+
+    // Non-bool expression used as a while condition
+    while(aaa){
+        aaa++;
+    }
+
+    while(t){
+        aaa++;
+    }
+
+    while(f){
+        aaa++;
+    }
+
+    // Non-integer expression used as a repeat clause
+    repeat(bbb){
+        aaa++;
+    }
+
+    repeat(t){
+        aaa++;
+    }
+
+    repeat(f){
+        aaa++;
+    }
+
+    // Type mismatch
+    bbb = aaa == bbb;
+    bbb = aaa != f;
+    bbb = aaa == t;
+    bbb = bbb != f(aaa, bbb);
+
+    // Equality operator applied to void functions
+    bbb = f3(aaa) == f(aaa, bbb);
+    bbb = f(aaa, bbb) != f3(t.a);
+
+    // Equality operator applied to functions
+    bbb = f == f4;
+    bbb = f2 != f4;
+
+    // Equality operator applied to struct names
+    bbb = S == S2;
+    bbb = S != S2;
+
+    // Equality operator applied to struct variables
+    bbb = t == t2;
+    bbb = t != t2;
+
+    // Function assignment
+    f = f2;
+    f3 = f2;
+
+    // Struct name assignment
+    S = S2;
+    S2 = S;
+
+    // Struct variable assignment
+    t = t2;
+    t2 = t;
+}

@@ -1,0 +1,87 @@
+struct St1 {
+    int a;
+    bool _b;
+};
+
+struct St2 {
+    struct St1 s1;
+    bool _a;
+};
+
+int x;
+bool y;
+struct St1 s;
+struct St2 s2;
+
+int testFunc(int a, bool b) {
+    int x;
+    bool y;
+    int z;
+    struct St1 s1;
+    struct St2 s2;
+
+    x = 1 + 2 + 3;
+    z = 3 + x;
+
+    x = 1 - 2 - 3;
+    z = 3 - x;
+
+    x = 1 * 2 * 3;
+    z = 3 * x;
+
+    x = 1 / 2 / 3;
+    z = 3 / x;
+
+    a = s1.a && z;
+    a = s2 || z;
+    a = s2._a > z;
+    a = s1 >= z;
+    a = s2._a < z;
+    a = s1 <= z;
+    a = s2._a == z;
+    a = s1 != z;
+
+    return x;
+}
+
+bool testStmts(int p1, bool p2, int p3, bool a) {
+    struct St1 s1;
+
+    // Test if
+    if(a > 0 && p1 != p2){
+        a++;
+        a--;
+    }
+
+    // Test if-else
+    if(a > 0 || !p3){
+        cin >> s1.a;
+    } else {
+        cout << a;
+    }
+
+    // if in if
+    if(p2) {
+        if (a == p1) { 
+            int a; a = p3; 
+        } else { 
+            a++; 
+        }
+    }
+
+    // Test while
+    while(a>0){
+        a--;
+    }
+
+    // Test repeat
+    repeat (a * p1 +2){
+        cout << s1.a;
+    }
+    a = testFunc(true, 6);
+    testFunc(false, a);
+
+    // Test non-empty return
+    return a + p1 * p2;
+}
+

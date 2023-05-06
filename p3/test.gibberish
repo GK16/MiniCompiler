@@ -1,0 +1,93 @@
+// 1. Test Variable declaration
+bool x;
+int y;
+
+// 2. Test struct declaration
+struct a b;
+struct s_id {
+    int a;
+    bool b;
+};
+
+// 3. Test Function declaration
+int  testFn() {}
+int  testFn(int x) {}
+bool  testFn(int x, bool y) {}
+
+// 4. Test expressions with associativity and associativity
+int testAssignExp(bool test, int p2) {
+    bool a;
+    y = z;
+
+    x = 1 + 2 + 3;
+    z = 3 + x;
+    s = "str" + "ing";
+
+    x = 1 - 2 - 3;
+    z = 3 - x;
+
+    x = 1 * 2 * 3;
+    z = 3 * x;
+
+    x = 1 / 2 / 3;
+    z = 3 / x;
+
+    a = b.y && c;
+    a = b || c;
+    a = b.y > c;
+    a = b >= c;
+    a = b.y < c;
+    a = b <= c;
+    a = b.y == c;
+    a = b != c;
+
+    // Test dot access opeator
+    a = !b.y;
+    a = -b.y;
+
+    // Test empty return
+    return;
+}
+
+// 5. Test Statements
+bool testStmts(int p1, bool p2, int p3) {
+    int a;
+
+    // Test if
+    if(a > 0 && p1 != p2){
+        a++;
+        a--;
+    }
+
+    // Test if-else
+    if(a > 0 || !p3){
+        cin >> a.x;
+    } else {
+        cout << a;
+    }
+
+    // if in if
+    if(p2) {
+        if (a == p1) { 
+            int a; a = p3; 
+        } else { 
+            a++; 
+        }
+    }
+
+    // Test while
+    while(a>0){
+        a--;
+    }
+
+    // Test repeat
+    repeat (a * p1 +2){
+        cout << a.y;
+    }
+    a = testAssignExp(true, 6);
+    testAssignExp(false, a);
+
+    // Test non-empty return
+    return a + p1 * p2;
+}
+

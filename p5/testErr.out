@@ -1,0 +1,115 @@
+bool bbb;
+struct S{
+    int a;
+    bool b;
+};
+
+struct S t;
+void f(int p1, bool p2) {
+}
+
+int f2(int p1, bool p2) {
+    return;
+}
+
+void f3(int p1) {
+    return p1(int);
+}
+
+int f4(int p1, bool p2) {
+    return p2(bool);
+}
+
+struct S2{
+    int c;
+    bool d;
+};
+
+struct S2 t2;
+void main() {
+    int aaa;
+    cout << f(int,bool->void);
+    cout << f2(int,bool->int);
+    cout << S(struct);
+    cout << S2(struct);
+    cout << t(S);
+    cout << t2(S2);
+    cout << f(int,bool->void)(aaa(int), bbb(bool));
+    cout << f3(int->void)(aaa(int));
+    cin >> f(int,bool->void);
+    cin >> f2(int,bool->int);
+    cin >> S(struct);
+    cin >> S2(struct);
+    cin >> t(S);
+    cin >> t2(S2);
+    aaa(int)();
+    bbb(bool)();
+    S(struct)();
+    t(S)();
+    f(int,bool->void)(aaa(int), bbb(bool), aaa(int));
+    f(int,bool->void)(aaa(int));
+    f(int,bool->void)();
+    f(int,bool->void)(aaa(int), aaa(int));
+    f(int,bool->void)(bbb(bool), bbb(bool));
+    f(int,bool->void)(aaa(int), t(S));
+    aaa(int) = (t(S).a(int) + bbb(bool));
+    aaa(int) = (t(S).a(int) - bbb(bool));
+    aaa(int) = (t(S).a(int) * bbb(bool));
+    aaa(int) = (t(S).a(int) / bbb(bool));
+    bbb(bool) = (aaa(int) > bbb(bool));
+    bbb(bool) = (aaa(int) < bbb(bool));
+    bbb(bool) = (aaa(int) >= bbb(bool));
+    bbb(bool) = (aaa(int) <= bbb(bool));
+    bbb(bool) = (t(S).b(bool) && aaa(int));
+    bbb(bool) = (t(S).b(bool) || aaa(int));
+    bbb(bool) = (!aaa(int));
+    if (aaa(int)) {
+        aaa(int)++;
+    }
+    if (t(S)) {
+        aaa(int)++;
+    }
+    else {
+        aaa(int)--;
+    }
+    if (f(int,bool->void)) {
+        aaa(int)++;
+    }
+    while (aaa(int)) {
+        aaa(int)++;
+    }
+    while (t(S)) {
+        aaa(int)++;
+    }
+    while (f(int,bool->void)) {
+        aaa(int)++;
+    }
+    repeat (bbb(bool)) {
+        aaa(int)++;
+    }
+    repeat (t(S)) {
+        aaa(int)++;
+    }
+    repeat (f(int,bool->void)) {
+        aaa(int)++;
+    }
+    bbb(bool) = (aaa(int) == bbb(bool));
+    bbb(bool) = (aaa(int) != f(int,bool->void));
+    bbb(bool) = (aaa(int) == t(S));
+    bbb(bool) = (bbb(bool) != f(int,bool->void)(aaa(int), bbb(bool)));
+    bbb(bool) = (f3(int->void)(aaa(int)) == f(int,bool->void)(aaa(int), bbb(bool)));
+    bbb(bool) = (f(int,bool->void)(aaa(int), bbb(bool)) != f3(int->void)(t(S).a(int)));
+    bbb(bool) = (f(int,bool->void) == f4(int,bool->int));
+    bbb(bool) = (f2(int,bool->int) != f4(int,bool->int));
+    bbb(bool) = (S(struct) == S2(struct));
+    bbb(bool) = (S(struct) != S2(struct));
+    bbb(bool) = (t(S) == t2(S2));
+    bbb(bool) = (t(S) != t2(S2));
+    f(int,bool->void) = f2(int,bool->int);
+    f3(int->void) = f2(int,bool->int);
+    S(struct) = S2(struct);
+    S2(struct) = S(struct);
+    t(S) = t2(S2);
+    t2(S2) = t(S);
+}
+
