@@ -1,5 +1,5 @@
 /**
- * Type class and its subclasses: 
+ * Type class and its subclasses:
  * ErrorType, IntType, BoolType, VoidType, StringType, FnType, StructType,
  */
 abstract public class Type {
@@ -14,6 +14,7 @@ abstract public class Type {
      * every subclass must provide a toString method and an equals method
      */
     abstract public String toString();
+
     abstract public boolean equals(Type t);
 
     /**
@@ -34,7 +35,7 @@ abstract public class Type {
     public boolean isVoidType() {
         return false;
     }
-    
+
     public boolean isStringType() {
         return false;
     }
@@ -46,7 +47,7 @@ abstract public class Type {
     public boolean isStructType() {
         return false;
     }
-    
+
     public boolean isStructDefType() {
         return false;
     }
@@ -165,11 +166,11 @@ class FnType extends Type {
 // **********************************************************************
 class StructType extends Type {
     private IdNode myId;
-    
+
     public StructType(IdNode id) {
         myId = id;
     }
-    
+
     public boolean isStructType() {
         return true;
     }

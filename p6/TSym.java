@@ -19,6 +19,7 @@ public class TSym {
     public String toString() {
         return type.toString();
     }
+
     public boolean isGlobal() {
         return offset == 1;
     }
@@ -41,7 +42,7 @@ class FnSym extends TSym {
     // new fields
     private Type returnType;
     private int numParams;
-    private List<Type> paramTypes; 
+    private List<Type> paramTypes;
     private int myParamSize;
     private int myLocalSize;
 
@@ -56,7 +57,7 @@ class FnSym extends TSym {
     public void addFormals(List<Type> L) {
         paramTypes = L;
     }
-    
+
     public Type getReturnType() {
         return returnType;
     }
@@ -86,19 +87,19 @@ class FnSym extends TSym {
     }
 
     public void setParamSize(int n) {
-	myParamSize = n;
+        myParamSize = n;
     }
 
     public void setLocalSize(int n) {
-	myLocalSize = n;
+        myLocalSize = n;
     }
 
     public int getParamSize() {
-	return myParamSize;
+        return myParamSize;
     }
 
     public int getLocalSize() {
-	return myLocalSize;
+        return myLocalSize;
     }
 
 }
@@ -111,7 +112,7 @@ class FnSym extends TSym {
  */
 class StructSym extends TSym {
     // new fields
-    private IdNode structType;  // name of the struct type
+    private IdNode structType; // name of the struct type
 
     public StructSym(IdNode id) {
         super(new StructType(id));
