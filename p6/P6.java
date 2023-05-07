@@ -23,6 +23,7 @@ public class P6 {
 	public static final int RESULT_SYNTAX_ERROR = 1;
 	public static final int RESULT_TYPE_ERROR = 2;
 	public static final int RESULT_NAME_ANALYSIS_ERROR = 3;
+	public static final int RESULT_CODE_GENERATION_ERROR = 4;
 	public static final int RESULT_OTHER_ERROR = -1;
 
 	/**
@@ -165,6 +166,10 @@ public class P6 {
 		//////////////////////////
 		// TODO: Calling codeGen //
 		//////////////////////////
+		astRoot.codeGen(this.outFile);
+		if (ErrMsg.getErr()) {
+			return P6.RESULT_CODE_GENERATION_ERROR;
+		}
 
 		return P6.RESULT_CORRECT;
 	}

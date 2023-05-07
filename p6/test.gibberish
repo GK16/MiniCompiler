@@ -1,4 +1,14 @@
+int recursion_fn(int input){
+    if(input <= 1){
+        return input;
+    }else{
+        return recursion_fn(input-1) + recursion_fn(input-2);
+    }
+}
+
 void main() {
-    cout << "Hello world!";
-    cout << "\n";
+    int a;
+    cin >> a;
+    cout << a;
+    cout << recursion_fn(a);
 }

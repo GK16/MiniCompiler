@@ -1,4 +1,5 @@
 import java.io.*;
+import java.util.HashMap;
 
 // **********************************************************************
 // The Codegen class provides constants and operations useful for code
@@ -247,5 +248,128 @@ public class Codegen {
         Integer k = new Integer(currLabel++);
         String tmp = ".L" + k;
         return (tmp);
+    }
+
+    // store str literals
+    private static HashMap<String, String> stringCache;
+
+    public static void init(PrintWriter printWriter) {
+        p = printWriter;
+        stringCache = new HashMap<>();
+    }
+
+    public static void cleanup() {
+        p.close();
+    }
+
+    public static void genVar(String varName) {
+        p.println("\t\t.data");
+        p.println("\t\t.align 2");
+        String blank = varName.length() < 2 ? "\t" : "";
+        p.println(String.format("_%s:%s\t.space 4", varName, blank));
+    }
+
+    public static void genFuncPreamble(String funcName) {
+        if (funcName.equals("main")) {
+            genMainPreamble();
+            return;
+        }
+
+        // for all other functions
+        p.println("\t\t.text");
+        p.println(String.format("_%s:", funcName));
+    }
+
+    public static void prepareFunc(FnSym funcSym) {
+        // 1. push return address
+        genPush(RA);
+
+        // 2. push control link (saved FP)
+        genPush(FP);
+
+        // 3. set $fp
+        // set the FP point to the bottom of the new AR
+        // +8: 4 bytes each for the control link and return address
+        // offset: size of params in bytes
+        String offsetParam = String.valueOf(funcSym.getParamSize() + 8);
+        // addu: Binary Addition Algorithm
+        generateWithComment("addu", "", FP, SP, offsetParam);
+
+        // 4. push space for local variablea
+        String offsetLocal = String.valueOf(funcSym.getLocalSize());
+        generateWithComment("subu", "", SP, SP, offsetLocal);
+    }
+
+    private static void genMainPreamble() {
+        p.println("\t\t.text");
+        p.println("\t\t.globl main");
+        p.println("main:\t\t# METHOD ENTRY");
+        p.println("__start:\t# add __start label for main only");
+    }
+
+    public static void comment(String comment) {
+        p.println("\t\t\t# " + comment);
+    }
+
+    public static void genFuncExit(String funcName, String label, FnSym sym) {
+
+        // 0. exit lable
+        comment("FUNCTION EXIT");
+        generateLabeled(label, "", "");
+
+        // 1. load return address
+        // lw $ra, -<param size>($fp)
+        generateIndexed("lw", RA, FP, -sym.getParamSize());
+
+        // 2. save control link
+        // use a temporary register (t0) to save the address that is initially in the FP
+        // move $t0, $fp
+        generateWithComment("move", " save control link", T0, FP);
+
+        // 3. restore FP
+        // lw $fp, -<paramsize+4>($fp)
+        generateIndexed("lw", FP, FP, -(sym.getParamSize() + 4), " restore FP");
+
+        // 4. restore SP
+        // move $sp, $t0
+        generateWithComment("move", " restore SP", SP, T0);
+
+        // 5. return
+        // jr $ra
+        if (funcName.equals("main")) {
+            generateWithComment("li", " load exit code for syscall", Codegen.V0, "10");
+            generateWithComment("syscall", " only do this for main");
+            return;
+        }
+        generate("jr", RA);
+    }
+
+    public static void genPushStrLit(String s) {
+        // Get the label to the string literal
+        String label;
+        if (stringCache.containsKey(s)) {
+            label = stringCache.get(s);
+        } else {
+            label = nextLabel();
+            p.println("\t\t.data");
+            p.println(label + ":\t.asciiz " + s);
+            stringCache.put(s, label);
+            p.println("\t\t.text");
+        }
+
+        // Push the address of the literal to the stack
+        generate("la", T0, label);
+        genPush(T0);
+    }
+
+    public static void genAssignSmt() {
+        // store value into the address
+        // put address into $t0
+        genPop(T0);
+        // put value into $t1
+        genPop(T1);
+        generateIndexed("sw", T1, T0, 0);
+        // have a copied value on stack
+        genPush(T1);
     }
 }

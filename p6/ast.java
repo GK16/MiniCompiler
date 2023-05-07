@@ -143,8 +143,10 @@ class ProgramNode extends ASTnode {
     /**
      * codeGen
      */
-    public void codeGen() {
-        // TODO: Fill this in!
+    public void codeGen(PrintWriter printWriter) {
+        Codegen.init(printWriter);
+        myDeclList.codeGen();
+        Codegen.cleanup();
     }
 
     /**
@@ -210,6 +212,21 @@ class DeclListNode extends ASTnode {
         } catch (NoSuchElementException ex) {
             System.err.println("unexpected NoSuchElementException in DeclListNode.print");
             System.exit(-1);
+        }
+    }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        for (DeclNode decl : myDecls) {
+            if (decl instanceof VarDeclNode) {
+                ((VarDeclNode) decl).codeGen();
+            }
+            if (decl instanceof FnDeclNode) {
+                ((FnDeclNode) decl).codeGen();
+            }
+
         }
     }
 
@@ -291,6 +308,17 @@ class FnBodyNode extends ASTnode {
         myStmtList.unparse(p, indent);
     }
 
+    /**
+     * MIPS assembly code generation
+     */
+    // There is no need to generate any code for the declarations.
+    // So to generate code for the function body, just call the codeGen method of
+    // the StmtListNode,
+    // which will in turn call the codeGen method of each statement in the list.
+    public void codeGen(String funcExitLabel) {
+        myStmtList.codeGen(funcExitLabel);
+    }
+
     // 2 kids
     private DeclListNode myDeclList;
     private StmtListNode myStmtList;
@@ -324,6 +352,34 @@ class StmtListNode extends ASTnode {
         Iterator<StmtNode> it = myStmts.iterator();
         while (it.hasNext()) {
             it.next().unparse(p, indent);
+        }
+    }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen(String funcExitLabel) {
+        for (StmtNode stmt : myStmts) {
+            // if (stmt instanceof StmtNodeWithPossibleReturn) {
+            // ((StmtNodeWithPossibleReturn) node).codeGen(funcExitLabel);
+            // return;
+            // }
+
+            if (stmt instanceof IfStmtNode) {
+                ((IfStmtNode) stmt).codeGen(funcExitLabel);
+            }
+            if (stmt instanceof IfElseStmtNode) {
+                ((IfElseStmtNode) stmt).codeGen(funcExitLabel);
+            }
+            if (stmt instanceof WhileStmtNode) {
+                ((WhileStmtNode) stmt).codeGen(funcExitLabel);
+            }
+            if (stmt instanceof ReturnStmtNode) {
+                ((ReturnStmtNode) stmt).codeGen(funcExitLabel);
+            }
+
+            stmt.codeGen();
+
         }
     }
 
@@ -385,6 +441,15 @@ class ExpListNode extends ASTnode {
         }
     }
 
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        for (ExpNode exp : myExps) {
+            exp.codeGen();
+        }
+    }
+
     // list of kids (ExpNodes)
     private List<ExpNode> myExps;
 }
@@ -402,6 +467,12 @@ abstract class DeclNode extends ASTnode {
     // default version of typeCheck for non-function decls
     public void typeCheck() {
     }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+    };
 }
 
 class VarDeclNode extends DeclNode {
@@ -518,6 +589,18 @@ class VarDeclNode extends DeclNode {
         p.print(" ");
         p.print(myId.name());
         p.println(";");
+    }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        if (!myId.sym().isGlobal()) {
+            return;
+        }
+
+        Codegen.genVar(myId.name());
+
     }
 
     // 3 kids
@@ -638,6 +721,27 @@ class FnDeclNode extends DeclNode {
         p.println(") {");
         myBody.unparse(p, indent + 4);
         p.println("}\n");
+    }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        FnSym sym = (FnSym) myId.sym();
+        String funcName = myId.name();
+        String funcExitLabel = "_" + funcName + "_Exit";
+
+        // Generate function preamble
+        Codegen.genFuncPreamble(funcName);
+
+        // Prepare the function entry
+        Codegen.prepareFunc(sym);
+
+        // Generate function body
+        myBody.codeGen(funcExitLabel);
+
+        // Generate function epilogue (after last statement)
+        Codegen.genFuncExit(funcName, funcExitLabel, sym);
     }
 
     // 4 kids
@@ -890,6 +994,12 @@ abstract class StmtNode extends ASTnode {
     abstract public void nameAnalysis(SymTable symTab);
 
     abstract public void typeCheck(Type retType);
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+    };
 }
 
 class AssignStmtNode extends StmtNode {
@@ -916,6 +1026,14 @@ class AssignStmtNode extends StmtNode {
         addIndentation(p, indent);
         myAssign.unparse(p, -1); // no parentheses
         p.println(";");
+    }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        myAssign.codeGen();
+        Codegen.genPop(Codegen.T0);
     }
 
     // 1 kid
@@ -953,6 +1071,24 @@ class PostIncStmtNode extends StmtNode {
         p.println("++;");
     }
 
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        myExp.codeGen();
+        Codegen.genPop(Codegen.T0);
+        Codegen.generate("add", Codegen.T0, Codegen.T0, String.valueOf(1));
+        if (!(myExp instanceof IdNode)) {
+            return;
+        }
+        TSym sym = ((IdNode) myExp).sym();
+        if (sym.isGlobal()) {
+            Codegen.generate("sw", Codegen.T0, "_" + ((IdNode) myExp).name());
+        } else {
+            Codegen.generateIndexed("sw", Codegen.T0, Codegen.FP, sym.getOffset());
+        }
+    }
+
     // 1 kid
     private ExpNode myExp;
 }
@@ -986,6 +1122,24 @@ class PostDecStmtNode extends StmtNode {
         addIndentation(p, indent);
         myExp.unparse(p, 0);
         p.println("--;");
+    }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        myExp.codeGen();
+        Codegen.genPop(Codegen.T0);
+        Codegen.generate("sub", Codegen.T0, Codegen.T0, String.valueOf(1));
+        if (!(myExp instanceof IdNode)) {
+            return;
+        }
+        TSym sym = ((IdNode) myExp).sym();
+        if (sym.isGlobal()) {
+            Codegen.generate("sw", Codegen.T0, "_" + ((IdNode) myExp).name());
+        } else {
+            Codegen.generateIndexed("sw", Codegen.T0, Codegen.FP, sym.getOffset());
+        }
     }
 
     // 1 kid
@@ -1032,6 +1186,31 @@ class ReadStmtNode extends StmtNode {
         p.print("cin >> ");
         myExp.unparse(p, 0);
         p.println(";");
+    }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+
+        if (!(myExp instanceof IdNode))
+            return;
+
+        TSym sym = ((IdNode) myExp).sym();
+        Type idType = ((IdNode) myExp).sym().getType();
+
+        if ((!idType.isIntType()) && (!idType.isBoolType()))
+            return;
+
+        Codegen.generate("li", Codegen.V0, 5);
+        Codegen.generate("syscall");
+
+        if (sym.isGlobal()) {
+            Codegen.generate("sw", Codegen.V0, "_" + ((IdNode) myExp).name(), "Store input into var");
+            return;
+        }
+        Codegen.generateIndexed("sw", Codegen.V0, Codegen.FP, sym.getOffset(), "Store input into var");
+
     }
 
     // 1 kid (actually can only be an IdNode or an ArrayExpNode)
@@ -1084,6 +1263,24 @@ class WriteStmtNode extends StmtNode {
         p.print("cout << ");
         myExp.unparse(p, 0);
         p.println(";");
+    }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        Codegen.comment("WRITE");
+        myExp.codeGen();
+        Codegen.genPop(Codegen.A0);
+        if (myType.isIntType() || myType.isBoolType()) {
+            Codegen.generate("li", Codegen.V0, 1);
+            Codegen.generate("syscall");
+            return;
+        }
+        if (myType.isStringType()) {
+            Codegen.generate("li", Codegen.V0, 4);
+            Codegen.generate("syscall");
+        }
     }
 
     // 1 kid
@@ -1143,6 +1340,21 @@ class IfStmtNode extends StmtNode {
         myStmtList.unparse(p, indent + 4);
         addIndentation(p, indent);
         p.println("}");
+    }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen(String funcExitLabel) {
+        String trueLabel = Codegen.nextLabel();
+        String doneLabel = Codegen.nextLabel();
+
+        if (ExpNode.couldBeBool(myExp)) {
+            myExp.goJumping(trueLabel, doneLabel);
+        }
+        Codegen.genLabel(trueLabel);
+        myStmtList.codeGen(funcExitLabel);
+        Codegen.genLabel(doneLabel);
     }
 
     // e kids
@@ -1229,6 +1441,28 @@ class IfElseStmtNode extends StmtNode {
         p.println("}");
     }
 
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen(String funcExitLabel) {
+        String trueLabel = Codegen.nextLabel();
+        String falseLabel = Codegen.nextLabel();
+        String doneLabel = Codegen.nextLabel();
+
+        if (ExpNode.couldBeBool(myExp)) {
+            myExp.goJumping(trueLabel, falseLabel);
+        }
+
+        Codegen.genLabel(trueLabel);
+        myThenStmtList.codeGen(funcExitLabel);
+
+        Codegen.generate("j", doneLabel);
+        Codegen.genLabel(falseLabel);
+        myElseStmtList.codeGen(funcExitLabel);
+
+        Codegen.genLabel(doneLabel);
+    }
+
     // 5 kids
     private ExpNode myExp;
     private DeclListNode myThenDeclList;
@@ -1289,6 +1523,27 @@ class WhileStmtNode extends StmtNode {
         myStmtList.unparse(p, indent + 4);
         addIndentation(p, indent);
         p.println("}");
+    }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen(String funcExitLabel) {
+        String entryLabel = Codegen.nextLabel();
+        String bodyLabel = Codegen.nextLabel();
+        String doneLabel = Codegen.nextLabel();
+
+        Codegen.genLabel(entryLabel);
+
+        if (ExpNode.couldBeBool(myExp)) {
+            myExp.goJumping(bodyLabel, doneLabel);
+        }
+
+        Codegen.genLabel(bodyLabel);
+        myStmtList.codeGen(funcExitLabel);
+
+        Codegen.generate("j", entryLabel);
+        Codegen.genLabel(doneLabel);
     }
 
     // 3 kids
@@ -1383,6 +1638,14 @@ class CallStmtNode extends StmtNode {
         p.println(";");
     }
 
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        myCall.codeGen();
+        Codegen.genPop(Codegen.T0);
+    }
+
     // 1 kid
     private CallExpNode myCall;
 }
@@ -1439,6 +1702,16 @@ class ReturnStmtNode extends StmtNode {
         p.println(";");
     }
 
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen(String funcExitLabel) {
+        if (myExp != null)
+            myExp.codeGen();
+        Codegen.genPop(Codegen.V0);
+        Codegen.generateWithComment("j", "Jump To Function Exit", funcExitLabel);
+    }
+
     // 1 kid
     private ExpNode myExp; // possibly null
 }
@@ -1459,6 +1732,24 @@ abstract class ExpNode extends ASTnode {
     abstract public int lineNum();
 
     abstract public int charNum();
+
+    abstract public void codeGen();
+
+    abstract public void goJumping(String l1, String l2);
+
+    public static boolean couldBeBool(ExpNode exp) {
+        if (exp instanceof TrueNode
+                || exp instanceof FalseNode
+                || exp instanceof IdNode
+                || exp instanceof AssignNode
+                || exp instanceof CallExpNode
+                || exp instanceof NotNode
+                || exp instanceof LogicalExpNode
+                || exp instanceof EqualityExpNode
+                || exp instanceof RelationalExpNode)
+            return true;
+        return false;
+    }
 }
 
 class IntLitNode extends ExpNode {
@@ -1492,6 +1783,17 @@ class IntLitNode extends ExpNode {
     public void unparse(PrintWriter p, int indent) {
         p.print(myIntVal);
     }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        Codegen.generate("li", Codegen.T0, String.valueOf(myIntVal));
+        Codegen.genPush(Codegen.T0);
+    }
+
+    public void goJumping(String l1, String l2) {
+    };
 
     private int myLineNum;
     private int myCharNum;
@@ -1530,6 +1832,16 @@ class StringLitNode extends ExpNode {
         p.print(myStrVal);
     }
 
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        Codegen.genPushStrLit(myStrVal);
+    }
+
+    public void goJumping(String l1, String l2) {
+    };
+
     private int myLineNum;
     private int myCharNum;
     private String myStrVal;
@@ -1566,6 +1878,18 @@ class TrueNode extends ExpNode {
         p.print("true");
     }
 
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        Codegen.generate("li", Codegen.T0, Codegen.TRUE);
+        Codegen.genPush(Codegen.T0);
+    }
+
+    public void goJumping(String l1, String l2) {
+        Codegen.generate("j", l1);
+    }
+
     private int myLineNum;
     private int myCharNum;
 }
@@ -1599,6 +1923,18 @@ class FalseNode extends ExpNode {
 
     public void unparse(PrintWriter p, int indent) {
         p.print("false");
+    }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        Codegen.generate("li", Codegen.T0, Codegen.FALSE);
+        Codegen.genPush(Codegen.T0);
+    }
+
+    public void goJumping(String l1, String l2) {
+        Codegen.generate("j", l2);
     }
 
     private int myLineNum;
@@ -1719,6 +2055,44 @@ class IdNode extends ExpNode {
         if (mySym != null) {
             p.print("(" + mySym + ")");
         }
+    }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        if (mySym.isGlobal()) {
+            Codegen.generate("lw", Codegen.T0, "_" + myStrVal);
+            Codegen.genPush(Codegen.T0);
+            return;
+        }
+        Codegen.generateIndexed("lw", Codegen.T0, Codegen.FP, mySym.getOffset());
+        Codegen.genPush(Codegen.T0);
+    }
+
+    // when being in a assign statement
+    public void genAddress() {
+        if (mySym.isGlobal()) {
+            Codegen.generate("la", Codegen.T0, "_" + myStrVal);
+            Codegen.genPush(Codegen.T0);
+        }
+        Codegen.generateIndexed("la", Codegen.T0, Codegen.FP, mySym.getOffset());
+        Codegen.genPush(Codegen.T0);
+    }
+
+    public void jumpAndLink() {
+        Codegen.generateWithComment("jal", "FUNCTION CALL", "_" + myStrVal);
+    }
+
+    public void goJumping(String l1, String l2) {
+        if (mySym.isGlobal()) {
+            Codegen.generate("lw", Codegen.T0, "_" + myStrVal);
+            Codegen.generate("beq", Codegen.T0, Codegen.FALSE, l2);
+            Codegen.generate("j", l1);
+        }
+        Codegen.generateIndexed("lw", Codegen.T0, Codegen.FP, mySym.getOffset());
+        Codegen.generate("beq", Codegen.T0, Codegen.FALSE, l2);
+        Codegen.generate("j", l1);
     }
 
     private int myLineNum;
@@ -1862,6 +2236,15 @@ class DotAccessExpNode extends ExpNode {
         myId.unparse(p, 0);
     }
 
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+    }
+
+    public void goJumping(String l1, String l2) {
+    };
+
     // 2 kids
     private ExpNode myLoc;
     private IdNode myId;
@@ -1946,6 +2329,30 @@ class AssignNode extends ExpNode {
             p.print(")");
     }
 
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        // evalate RHS and leave value on the stack
+        myExp.codeGen();
+
+        // push address of the LHS Id onto stack
+        if (myLhs instanceof IdNode) {
+            ((IdNode) myLhs).genAddress();
+        } else {
+            myLhs.codeGen();
+        }
+
+        Codegen.genAssignSmt();
+    }
+
+    public void goJumping(String l1, String l2) {
+        this.codeGen();
+        Codegen.genPop(Codegen.T0);
+        Codegen.generate("beq", Codegen.T0, Codegen.FALSE, l2);
+        Codegen.generate("j", l1);
+    }
+
     // 2 kids
     private ExpNode myLhs;
     private ExpNode myExp;
@@ -2025,6 +2432,28 @@ class CallExpNode extends ExpNode {
         p.print(")");
     }
 
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        // evaluate each argument and push onto stack
+        if (myExpList != null) {
+            myExpList.codeGen();
+        }
+
+        myId.jumpAndLink();
+
+        // push return value from $v0 onto stack
+        Codegen.genPush(Codegen.V0);
+    }
+
+    public void goJumping(String l1, String l2) {
+        this.codeGen();
+        Codegen.genPop(Codegen.T0);
+        Codegen.generate("beq", Codegen.T0, Codegen.FALSE, l2);
+        Codegen.generate("j", l1);
+    }
+
     // 2 kids
     private IdNode myId;
     private ExpListNode myExpList; // possibly null
@@ -2095,6 +2524,28 @@ abstract class BinaryExpNode extends ExpNode {
         myExp2.nameAnalysis(symTab);
     }
 
+    /**
+     * MIPS assembly code generation
+     */
+    protected void genNonShortCircuit(String opCode) {
+        myExp1.codeGen();
+        myExp2.codeGen();
+
+        Codegen.genPop(Codegen.T1); // $t1 <- RHS
+        Codegen.genPop(Codegen.T0); // $t0 <- LHS
+
+        if (this instanceof TimesNode || this instanceof DivideNode) {
+            // Special treatment for mult and div:
+            // https://stackoverflow.com/a/16061173/9057530
+            Codegen.generate(opCode, Codegen.T0, Codegen.T1);
+            Codegen.generate("mflo", Codegen.T0);
+        } else {
+            Codegen.generate(opCode, Codegen.T0, Codegen.T0, Codegen.T1);
+        }
+
+        Codegen.genPush(Codegen.T0);
+    }
+
     // two kids
     protected ExpNode myExp1;
     protected ExpNode myExp2;
@@ -2134,6 +2585,20 @@ class UnaryMinusNode extends UnaryExpNode {
         myExp.unparse(p, 0);
         p.print(")");
     }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        myExp.codeGen();
+        Codegen.genPop(Codegen.T0);
+        Codegen.generate("li", Codegen.T1, -1);
+        Codegen.generate("mult", Codegen.T0, Codegen.T1);
+        Codegen.generate("mflo", Codegen.T0);
+    }
+
+    public void goJumping(String l1, String l2) {
+    };
 }
 
 class NotNode extends UnaryExpNode {
@@ -2159,6 +2624,22 @@ class NotNode extends UnaryExpNode {
         }
 
         return retType;
+    }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        myExp.codeGen();
+        Codegen.genPop(Codegen.T0);
+        Codegen.generate("seq", Codegen.T0, Codegen.T0, Codegen.FALSE);
+    }
+
+    public void goJumping(String l1, String l2) {
+        this.codeGen();
+        Codegen.genPop(Codegen.T0);
+        Codegen.generate("beq", Codegen.T0, Codegen.FALSE, l2);
+        Codegen.generate("j", l1);
     }
 
     public void unparse(PrintWriter p, int indent) {
@@ -2287,6 +2768,13 @@ abstract class EqualityExpNode extends BinaryExpNode {
 
         return retType;
     }
+
+    public void goJumping(String l1, String l2) {
+        this.codeGen();
+        Codegen.genPop(Codegen.T0);
+        Codegen.generate("beq", Codegen.T0, Codegen.FALSE, l2);
+        Codegen.generate("j", l1);
+    }
 }
 
 abstract class RelationalExpNode extends BinaryExpNode {
@@ -2320,6 +2808,13 @@ abstract class RelationalExpNode extends BinaryExpNode {
 
         return retType;
     }
+
+    public void goJumping(String l1, String l2) {
+        this.codeGen();
+        Codegen.genPop(Codegen.T0);
+        Codegen.generate("beq", Codegen.T0, Codegen.FALSE, l2);
+        Codegen.generate("j", l1);
+    }
 }
 
 class PlusNode extends ArithmeticExpNode {
@@ -2334,6 +2829,21 @@ class PlusNode extends ArithmeticExpNode {
         myExp2.unparse(p, 0);
         p.print(")");
     }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        myExp1.codeGen();
+        myExp2.codeGen();
+        Codegen.genPop(Codegen.T1);
+        Codegen.genPop(Codegen.T0);
+        Codegen.generate("add", Codegen.T0, Codegen.T0, Codegen.T1);
+        Codegen.genPush(Codegen.T0);
+    }
+
+    public void goJumping(String l1, String l2) {
+    };
 }
 
 class MinusNode extends ArithmeticExpNode {
@@ -2348,6 +2858,21 @@ class MinusNode extends ArithmeticExpNode {
         myExp2.unparse(p, 0);
         p.print(")");
     }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        myExp1.codeGen();
+        myExp2.codeGen();
+        Codegen.genPop(Codegen.T1);
+        Codegen.genPop(Codegen.T0);
+        Codegen.generate("sub", Codegen.T0, Codegen.T0, Codegen.T1);
+        Codegen.genPush(Codegen.T0);
+    }
+
+    public void goJumping(String l1, String l2) {
+    };
 }
 
 class TimesNode extends ArithmeticExpNode {
@@ -2362,6 +2887,22 @@ class TimesNode extends ArithmeticExpNode {
         myExp2.unparse(p, 0);
         p.print(")");
     }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        myExp1.codeGen();
+        myExp2.codeGen();
+        Codegen.genPop(Codegen.T1);
+        Codegen.genPop(Codegen.T0);
+        Codegen.generate("mult", Codegen.T0, Codegen.T1);
+        Codegen.generate("mflo", Codegen.T0);
+        Codegen.genPush(Codegen.T0);
+    }
+
+    public void goJumping(String l1, String l2) {
+    };
 }
 
 class DivideNode extends ArithmeticExpNode {
@@ -2376,6 +2917,22 @@ class DivideNode extends ArithmeticExpNode {
         myExp2.unparse(p, 0);
         p.print(")");
     }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        myExp1.codeGen();
+        myExp2.codeGen();
+        Codegen.genPop(Codegen.T1);
+        Codegen.genPop(Codegen.T0);
+        Codegen.generate("div", Codegen.T0, Codegen.T1);
+        Codegen.generate("mflo", Codegen.T0);
+        Codegen.genPush(Codegen.T0);
+    }
+
+    public void goJumping(String l1, String l2) {
+    };
 }
 
 class AndNode extends LogicalExpNode {
@@ -2390,6 +2947,33 @@ class AndNode extends LogicalExpNode {
         myExp2.unparse(p, 0);
         p.print(")");
     }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        String skip = Codegen.nextLabel();
+        String done = Codegen.nextLabel();
+
+        myExp1.codeGen();
+        Codegen.genPop(Codegen.T0); // pop 1st value into $t0
+        Codegen.generate("bne", Codegen.T0, Codegen.TRUE, skip);
+        myExp1.codeGen();
+        Codegen.generate("j", done);
+
+        Codegen.genLabel(skip);
+        Codegen.generate("li", Codegen.T0, Codegen.FALSE);
+        Codegen.genPush(Codegen.T0);
+        Codegen.genLabel(done);
+    }
+
+    public void goJumping(String l1, String l2) {
+        String evaluateSecondExpLabel = Codegen.nextLabel();
+        myExp1.goJumping(evaluateSecondExpLabel, l2);
+        Codegen.genLabel(evaluateSecondExpLabel);
+        myExp2.goJumping(l1, l2);
+    }
+
 }
 
 class OrNode extends LogicalExpNode {
@@ -2404,6 +2988,28 @@ class OrNode extends LogicalExpNode {
         myExp2.unparse(p, 0);
         p.print(")");
     }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        String skipSecondExpLabel = Codegen.nextLabel();
+        String doneLabel = Codegen.nextLabel();
+
+        myExp1.codeGen();
+        Codegen.genPop(Codegen.T0); // pop 1st value into $t0
+        Codegen.generate("bne", Codegen.T0, Codegen.FALSE, skipSecondExpLabel);
+        myExp1.codeGen();
+        Codegen.generate("j", doneLabel);
+
+        Codegen.genLabel(skipSecondExpLabel);
+        Codegen.generate("li", Codegen.T0, Codegen.TRUE);
+        Codegen.genPush(Codegen.T0);
+        Codegen.genLabel(doneLabel);
+    }
+
+    public void goJumping(String l1, String l2) {
+    };
 }
 
 class EqualsNode extends EqualityExpNode {
@@ -2417,6 +3023,18 @@ class EqualsNode extends EqualityExpNode {
         p.print(" == ");
         myExp2.unparse(p, 0);
         p.print(")");
+    }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        myExp1.codeGen();
+        myExp2.codeGen();
+        Codegen.genPop(Codegen.T1);
+        Codegen.genPop(Codegen.T0);
+        Codegen.generate("seq", Codegen.T0, Codegen.T0, Codegen.T1);
+        Codegen.genPush(Codegen.T0);
     }
 }
 
@@ -2432,6 +3050,18 @@ class NotEqualsNode extends EqualityExpNode {
         myExp2.unparse(p, 0);
         p.print(")");
     }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        myExp1.codeGen();
+        myExp2.codeGen();
+        Codegen.genPop(Codegen.T1);
+        Codegen.genPop(Codegen.T0);
+        Codegen.generate("sne", Codegen.T0, Codegen.T0, Codegen.T1);
+        Codegen.genPush(Codegen.T0);
+    }
 }
 
 class LessNode extends RelationalExpNode {
@@ -2445,6 +3075,18 @@ class LessNode extends RelationalExpNode {
         p.print(" < ");
         myExp2.unparse(p, 0);
         p.print(")");
+    }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        myExp1.codeGen();
+        myExp2.codeGen();
+        Codegen.genPop(Codegen.T1);
+        Codegen.genPop(Codegen.T0);
+        Codegen.generate("slt", Codegen.T0, Codegen.T0, Codegen.T1);
+        Codegen.genPush(Codegen.T0);
     }
 }
 
@@ -2460,6 +3102,18 @@ class GreaterNode extends RelationalExpNode {
         myExp2.unparse(p, 0);
         p.print(")");
     }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        myExp1.codeGen();
+        myExp2.codeGen();
+        Codegen.genPop(Codegen.T1);
+        Codegen.genPop(Codegen.T0);
+        Codegen.generate("sgt", Codegen.T0, Codegen.T0, Codegen.T1);
+        Codegen.genPush(Codegen.T0);
+    }
 }
 
 class LessEqNode extends RelationalExpNode {
@@ -2474,6 +3128,18 @@ class LessEqNode extends RelationalExpNode {
         myExp2.unparse(p, 0);
         p.print(")");
     }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        myExp1.codeGen();
+        myExp2.codeGen();
+        Codegen.genPop(Codegen.T1);
+        Codegen.genPop(Codegen.T0);
+        Codegen.generate("sle", Codegen.T0, Codegen.T0, Codegen.T1);
+        Codegen.genPush(Codegen.T0);
+    }
 }
 
 class GreaterEqNode extends RelationalExpNode {
@@ -2487,5 +3153,17 @@ class GreaterEqNode extends RelationalExpNode {
         p.print(" >= ");
         myExp2.unparse(p, 0);
         p.print(")");
+    }
+
+    /**
+     * MIPS assembly code generation
+     */
+    public void codeGen() {
+        myExp1.codeGen();
+        myExp2.codeGen();
+        Codegen.genPop(Codegen.T1);
+        Codegen.genPop(Codegen.T0);
+        Codegen.generate("sqe", Codegen.T0, Codegen.T0, Codegen.T1);
+        Codegen.genPush(Codegen.T0);
     }
 }
